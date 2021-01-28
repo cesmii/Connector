@@ -14,3 +14,6 @@ As you look through the code, it may be helpful to understand the basic stages o
 - Read: The South Bridge services calls your Reader's Read method to gather samples for the set of tags that Reader instance was created to service
 - Dispose: Your Reader instance is no longer needed and can clean-up
 - Disconnect: Your Connector is no longer needed and can Disconnect from the data source
+
+## Additional information
+Review the code comments and supplementary .md files for further information on creating, installing and configuring Connectors.
