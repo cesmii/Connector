@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="ThinkIQ.DataManagement">
+      <HintPath>..\ThinkIQ.Simulator.Connector\bin\Debug\netstandard2.0\ThinkIQ.DataManagement.dll</HintPath>
+    </Reference>
+    <Reference Include="ThinkIQ.Utils">
+      <HintPath>..\ThinkIQ.Simulator.Connector\bin\Debug\netstandard2.0\ThinkIQ.Utils.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
