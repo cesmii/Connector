@@ -1,6 +1,7 @@
-﻿# Install
+﻿# Install on Linux
 
 - Create a new connector in the Cloud, to generate the necessary Activation code
+- Install .Net Core runtime
 - Install the connector you just created, from its DEB package, supplying the Activation code when prompted
 - Bits will be installed to /opt/thinkiq
 - A `model.json` file will be created in /opt/thinkiq/services/SouthBridgeService
