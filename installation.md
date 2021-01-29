@@ -2,7 +2,8 @@
 
 - Create a new connector in the Cloud, to generate the necessary Activation code
 - Install .Net Core runtime
-- Install the connector you just created, from its DEB package, supplying the Activation code when prompted
+- Install the connector you just created, from its DEB package, supplying the Activation code when prompted:
+    + `sudo apt install ./tiq-gateway.deb`
 - Bits will be installed to /opt/thinkiq
 - A `model.json` file will be created in /opt/thinkiq/services/SouthBridgeService
 - Add your .DLL (and any dependencies) to /opt/thinkiq/services/SouthrBridgeService
