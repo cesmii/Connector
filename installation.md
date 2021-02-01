@@ -6,6 +6,9 @@
     + `sudo apt install ./tiq-gateway.deb`
 - Bits will be installed to /opt/thinkiq
 - A `model.json` file will be created in /opt/thinkiq/services/SouthBridgeService
+- Stop the services:
+    + `sudo systemctl stop tiq-south-bridge.service`
+    + `sudo systemctl stop tiq-opcua-north.service`
 - Add your .DLL (and any dependencies) to /opt/thinkiq/services/SouthrBridgeService
 - Add reference to your DLL in `appsettings.json`:
 
@@ -33,8 +36,11 @@
   }
 }
 ```
-
-- Restart SouthService to read in new configuration: `sudo systemctl restart tiq-south-bridge.service` 
+- Delete the DataRoot folder and all contents:
+    + `sudo rm -rf /opt/thinkiq/DataRoot/`
+- Restart the services to read in new configuration: 
+    + `sudo systemctl start tiq-opcua-north.service`
+    + `sudo systemctl start tiq-south-bridge.service` 
 - Logs for troubleshooting can be found at `/opt/thinkiq/logs/south`
 
 # Uninstall
