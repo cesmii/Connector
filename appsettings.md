@@ -24,7 +24,7 @@ Combined, these two tags allow local overrides to tag lists, per the following t
 - `AcquisitionDelayInSeconds`
 - `HistSeizedThresholdInSeconds`
 
-#AppSetting.json Example
+# AppSetting.json Example
 ```
 {
   "AppConfiguration": {
