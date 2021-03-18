@@ -1,4 +1,4 @@
-﻿#AppSettings.json Fields
+﻿# AppSettings.json Fields
 
 - `Connector` - Information about how to instatiate your Connector, see example below
 - `DataStorer` - Information about instantiating the built-in data handlers. Do not modify.
