@@ -30,7 +30,7 @@ Combined, these two tags allow local overrides to tag lists, per the following t
   "AppConfiguration": {
     "Connector": {
       "Assembly": "CESMIIConnectorSample",
-      "Class": "CESMIIConnectorSample.SampleConnectorFactory",
+      "Class": "CESMII.SampleConnectorFactory",
       "Params": {}
     },
     "DataStorer": {
