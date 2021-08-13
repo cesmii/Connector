@@ -1,6 +1,6 @@
 # Existing Connector Adapters
 
-Before building your own custom Connector Adapter, review the following list and installation tips to see if one of the existing connectors work for you.
+Before [building your own custom Connector Adapter](https://github.com/cesmii/Connector/blob/main/README.md), review the following list and installation tips to see if one of the existing connectors work for you.
 In all cases, you'll first need to create a Connector record in the web UI of your platform instance to download the install package and generate the necessary activation code.
 
 ## Windows Connectors
