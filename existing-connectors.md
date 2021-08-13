@@ -16,7 +16,6 @@ Supports connecting to a remote Historian server. During installation you'll be 
 
 - Pre-requisites
     + Install the [OPC .NET Redistributable](https://cesmii.net/installers/OPC.NetRedist.msi)
-    + Install the [OPC Core Components Redistributable](https://cesmii.net/installers/OPCCoreRedist.msi)
     + Install OPC HDA Interface for OSI Pi (available from your OSI Pi installer, or downloads)
 
 ### OPC HDA
@@ -29,6 +28,9 @@ Supports configurable OPC HDA Server. During installation you'll be prompted for
 ![OPC DA Server Configuration in Windows](images/OPCDAServerWindows.png)
 
 ### OPC DA (Classic)
+
+- Pre-requisites
+    + Install the [OPC .NET Redistributable](https://cesmii.net/installers/OPC.NetRedist.msi)
 
 Supports configurable OPC DA Server. During installation you'll be prompted for server details...
 
