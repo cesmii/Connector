@@ -17,6 +17,7 @@ Supports connecting to a remote Historian server. During installation you'll be 
 - Pre-requisites
     + Install the [OPC .NET Redistributable](https://cesmii.net/installers/OPC.NetRedist.msi)
     + Install the [OPC Core Components Redistributable](https://cesmii.net/installers/OPCCoreRedist.msi)
+    + Install OPC HDA Interface for OSI Pi (available from your OSI Pi installer, or downloads)
 
 ### OPC HDA
 
