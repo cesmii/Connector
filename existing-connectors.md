@@ -21,6 +21,9 @@ Supports connecting to a remote Historian server. During installation you'll be 
 
 ### OPC HDA
 
+- Pre-requisites
+    + Install the [OPC .NET Redistributable](https://cesmii.net/installers/OPC.NetRedist.msi)
+
 ### OPC DA (Classic)
 
 Supports configurable OPC DA Server. During installation you'll be prompted for server details...
