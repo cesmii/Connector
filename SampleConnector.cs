@@ -12,6 +12,8 @@ namespace CESMII
         /// <see cref="SampleConnectorFactory"/>
         internal IDictionary<string, object> Parameters { get; set; }
 
+        bool IDataSource.IsConnected => true;
+
         /// <summary>
         /// Called by the South Bridge service when its time to Connect to your data source.
         /// </summary>

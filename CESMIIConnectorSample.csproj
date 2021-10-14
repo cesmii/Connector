@@ -7,10 +7,10 @@
 
   <ItemGroup>
     <Reference Include="ThinkIQ.DataManagement">
-      <HintPath>..\ThinkIQ.Simulator.Connector\bin\Debug\netstandard2.0\ThinkIQ.DataManagement.dll</HintPath>
+      <HintPath>C:\Program Files\ThinkIQ\SouthBridgeService\ThinkIQ.DataManagement.dll</HintPath>
     </Reference>
     <Reference Include="ThinkIQ.Utils">
-      <HintPath>..\ThinkIQ.Simulator.Connector\bin\Debug\netstandard2.0\ThinkIQ.Utils.dll</HintPath>
+      <HintPath>C:\Program Files\ThinkIQ\SouthBridgeService\ThinkIQ.Utils.dll</HintPath>
     </Reference>
   </ItemGroup>
 

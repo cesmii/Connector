@@ -35,13 +35,13 @@ namespace CESMII
 
             foreach (var tag in _tagDict.Keys)  //for each of the tags this Reader was created to service
             {
-                ItemData myItemData = new ItemData { VQTs = new List<VQT>(), Item = tag };  //Create a new ItemData
+                ItemData myItemData = new ItemData { VSTs = new List<VST>(), Item = tag };  //Create a new ItemData
 
                 //Get (or in this example, make) some data point samples for this tag within the requested time range
-                myItemData.VQTs.Add(new VQT(startTime.Ticks, 192, startTime));
+                myItemData.VSTs.Add(new VST(startTime.Ticks, 192, startTime));
                 var midTime = startTime + ((endTime - startTime) / 2);
-                myItemData.VQTs.Add(new VQT(midTime.Ticks, 192, midTime));
-                myItemData.VQTs.Add(new VQT(endTime.Ticks, 192, endTime));
+                myItemData.VSTs.Add(new VST(midTime.Ticks, 192, midTime));
+                myItemData.VSTs.Add(new VST(endTime.Ticks, 192, endTime));
                 newData.Add(myItemData);
             }
 
