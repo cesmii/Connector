@@ -21,5 +21,10 @@ As you look through the code, it may be helpful to understand the basic stages o
 - Dispose: Your Reader instance is no longer needed and can clean-up
 - Disconnect: Your Connector is no longer needed and can Disconnect from the data source
 
+## Dependencies
+The sample code depends on two DLLs that are not distributed with this repo (for license reasons).
+
+SM Platform users can create a Custom Connector in their platform instance, and download the Installer, which will deploy the dependencies to the location expected in the .csproj file
+
 ## Additional information
 Review the code comments and supplementary .md files for further information on creating, [installing](installation.md) and [configuring](appsettings.md) Connectors.
