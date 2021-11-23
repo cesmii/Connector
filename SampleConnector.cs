@@ -11,8 +11,10 @@ namespace CESMII
         /// </summary>
         /// <see cref="SampleConnectorFactory"/>
         internal IDictionary<string, object> Parameters { get; set; }
-
-        bool IDataSource.IsConnected => true;
+        uint _tagCount;
+        uint _dataTimeGapSeconds;
+        private bool IsConnected = false;
+        bool IDataSource.IsConnected { get => IsConnected; }
 
         /// <summary>
         /// Called by the South Bridge service when its time to Connect to your data source.
@@ -26,7 +28,31 @@ namespace CESMII
         public bool Connect(IConnectorInfo info)
         {
             //Perform the actual connection to your data source
-            return true;
+            //return true;
+            IsConnected = false;
+
+            if (info.Attributes == null)
+                return false;
+
+            if (info.Attributes.TryGetValue("TagCount", out var configTagCount))
+            {
+                if (uint.TryParse(configTagCount.ToString(), out var tagCount))
+                {
+                    _tagCount = tagCount;
+                }
+            }
+
+            if (info.Attributes.TryGetValue("DataTimeGapSeconds", out var configDataTimeGapSeconds))
+            {
+                if (uint.TryParse(configDataTimeGapSeconds.ToString(), out var dataTimeGapSeconds))
+                {
+                    _dataTimeGapSeconds = dataTimeGapSeconds;
+                }
+            }
+
+            IsConnected = true;
+            return IsConnected;
+
         }
 
         /// <summary>

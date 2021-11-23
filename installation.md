@@ -1,4 +1,45 @@
-﻿# Install on Linux
+﻿# Install on Windows
+
+- Create a new "Custom Connector" on the SMIP.
+- Install .NET Core Runtime 3.1 on the PC where the connector will be installed.
+- Download and install custom connecter on PC using the Activation Code. Take note of install locations.
+- Clone this repository
+- Open the project (VS2019 and VS2022 were tested)
+- Add custom connector code to connect to data source 
+- Build DLL
+- From `services.msc` Stop the three (3) ThinkIQ services
+- Copy your DLL (and any dependencies) to C:\Program Files\ThinkIQ\SouthBridgeService install folder (default location)
+- Add reference to your DLL in C:\Program Files\ThinkIQ\SouthBridgeService\appsettings.json (More information [here](appsettings.md))
+```
+    "Connector": {
+      "Assembly": "YourAssembly",
+      "Class": "YourAssembly.YourConnectorFactory",
+      "Params": {
+        //Any parameters you need set before your Connector is constructed
+      }
+    }
+```
+- Modify `model.json` to add any Attributes your Adapters needs at run time:
+```
+{
+  "Parent": [
+    "platform-instance-name-set-by-cloud""
+    "connector-name-set-in-cloud"
+  ],
+  "Name": "connector-name-set-in-cloud",
+  "Attributes": {
+    //Any run time parameters your Connector needs
+  }
+}
+```
+- From `services.msc` Start the three (3) ThinkIQ services
+- Troubleshoot by looking at C:\Program Files\ThinkIQ\SouthBridgeService\Logs.
+- If NETStandard.Library 2.0.0 is not installed, you will encounter runtime errors. 
+    + Check requirements: https://docs.microsoft.com/en-us/dotnet/standard/net-standard
+    + Resolve by running this in Package Manager Console (https://www.nuget.org/packages/NETStandard.Library/)
+    `Install-Package NETStandard.Library -Version 2.0.0`
+
+# Install on Linux
 
 - Create a new connector in the Cloud, to generate the necessary Activation code
 - Install .Net Core runtime

@@ -39,7 +39,7 @@ namespace CESMII
 
                 //Get (or in this example, make) some data point samples for this tag within the requested time range
                 myItemData.VSTs.Add(new VST(startTime.Ticks, 192, startTime));
-                var midTime = startTime + ((endTime - startTime) / 2);
+                var midTime = startTime + new TimeSpan((endTime - startTime).Ticks / 2);
                 myItemData.VSTs.Add(new VST(midTime.Ticks, 192, midTime));
                 myItemData.VSTs.Add(new VST(endTime.Ticks, 192, endTime));
                 newData.Add(myItemData);
