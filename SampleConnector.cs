@@ -28,7 +28,6 @@ namespace CESMII
         public bool Connect(IConnectorInfo info)
         {
             //Perform the actual connection to your data source
-            //return true;
             IsConnected = false;
 
             if (info.Attributes == null)
