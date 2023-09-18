@@ -13,7 +13,7 @@
 ```
     "Connector": {
       "Assembly": "YourAssembly",
-      "Class": "YourAssembly.YourConnectorFactory",
+      "Class": "YourNamespace.YourConnectorFactory",
       "Params": {
         //Any parameters you need set before your Connector is constructed
       }
