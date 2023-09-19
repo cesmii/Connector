@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+      <OutputType>Library</OutputType>
+      <TargetFramework>netstandard2.0</TargetFramework>
+      <BaseOutputPath>bin\</BaseOutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <None Remove="deploy.bat" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="deploy.bat">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Newtonsoft.Json">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\Newtonsoft.Json.dll</HintPath>
+      </Reference>
+      <Reference Include="Serilog">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\Serilog.dll</HintPath>
+      </Reference>
+      <Reference Include="Serilog.Extensions.Logging">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\Serilog.Extensions.Logging.dll</HintPath>
+      </Reference>
+      <Reference Include="Serilog.Settings.Configuration">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\Serilog.Settings.Configuration.dll</HintPath>
+      </Reference>
+      <Reference Include="Serilog.Sinks.Console">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\Serilog.Sinks.Console.dll</HintPath>
+      </Reference>
+      <Reference Include="Serilog.Sinks.File">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\Serilog.Sinks.File.dll</HintPath>
+      </Reference>
+      <Reference Include="ThinkIQ.DataManagement">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\ThinkIQ.DataManagement.dll</HintPath>
+      </Reference>
+      <Reference Include="ThinkIQ.Utils">
+        <HintPath>..\..\..\..\Program Files\ThinkIQ\SouthBridgeService\ThinkIQ.Utils.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Update="NETStandard.Library" Version="2.0.0" />
+    </ItemGroup>
+
+    <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+      <Exec Command="call deploy.bat" />
+    </Target>
+</Project>

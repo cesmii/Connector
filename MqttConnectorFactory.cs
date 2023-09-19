@@ -1,13 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using Serilog;
+using System.Collections.Generic;
 using ThinkIQ.DataManagement;
 
-namespace CESMII
+namespace SmipMqttConnector
 {
     /// <summary>
     /// The Factory patterns allows the SM Edge Gateway to instantiate Connectors without knowing the details
     /// of how a given Connector needs to be constructed.
     /// </summary>
-    public class SampleConnectorFactory : IConnectorFactory
+    public class MqttConnectorFactory : IConnectorFactory
     {
         private IDictionary<string, object> _parameters;
 
@@ -19,6 +20,8 @@ namespace CESMII
         public void Initialize(IDictionary<string, object> parameters)
         {
             _parameters = parameters;   //remember the parameters that were passed in.
+
+            Log.Information("Connector adapter initialized with parameters: " + Newtonsoft.Json.JsonConvert.SerializeObject(parameters));
         }
 
         /// <summary>
@@ -28,8 +31,9 @@ namespace CESMII
         /// <returns>An instance of your Connector</returns>
         public IConnector Create()
         {
-            var myConnector = new SampleConnector();
+            var myConnector = new MqttConnector();
             myConnector.Parameters = _parameters;   //Set the Connector Parameters property to equal the parameters value we remembered during Initialize
+            Log.Information("Connector adapter created!");
             return myConnector;
 
             /* More concise way to write the above
@@ -40,11 +44,12 @@ namespace CESMII
         /// <summary>
         /// Used to instantiate our Configuration class. See GPIOConnectorConfig.cs
         /// </summary>
-        /// <seealso cref="SampleConnector"/>
+        /// <seealso cref="MqttConnector"/>
         /// <returns>A new ConnectorConfig instance</returns>
         public IConnectorConfig GetConfig()
         {
-            return new SampleConnectorConfig();
+            Log.Information("Connector adapter configured!");
+            return new MqttConnectorConfig();
         }
 
     }

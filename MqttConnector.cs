@@ -1,19 +1,34 @@
-﻿using System.Collections.Generic;
+﻿using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using ThinkIQ.DataManagement;
 
-namespace CESMII
+namespace SmipMqttConnector
 {
-    public class SampleConnector : IConnector
+    public class MqttConnector : IConnector
     {
         /// <summary>
         /// Set by Factory during instantiation.
         /// Values come from appsettings connector config params
         /// </summary>
-        /// <see cref="SampleConnectorFactory"/>
+        /// <see cref="MqttConnectorFactory"/>
         internal IDictionary<string, object> Parameters { get; set; }
+
         uint _tagCount;
         uint _dataTimeGapSeconds;
+        public static int ReadCount = 0;
         private bool IsConnected = false;
+        private static string dataRoot = "";
+        internal IDictionary<string, ITag> _lastTagDict { get; set; }
+
+        public static string HistRoot = "MqttHist";
+        public static string TopicListFile = "MqttTopicList.json";
+        public static string TopicSubscriptionFile = "CloudAcquiredTagList.txt";
+
         bool IDataSource.IsConnected { get => IsConnected; }
 
         /// <summary>
@@ -23,7 +38,7 @@ namespace CESMII
         /// Configuration info that comes from your ConnectorConfig. 
         /// Typically this is the contents of the Attributes section of the model.json file in the same folder.
         /// </param>
-        /// <seealso cref="SampleConnector"/>
+        /// <seealso cref="MqttConnector"/>
         /// <returns>True or False indicating a successful connection.</returns>
         public bool Connect(IConnectorInfo info)
         {
@@ -49,6 +64,8 @@ namespace CESMII
                 }
             }
 
+            Log.Information("Connector adapter connected!");
+
             IsConnected = true;
             return IsConnected;
 
@@ -61,21 +78,47 @@ namespace CESMII
         /// <returns>A list of tag names that this Connector can service</returns>
         public IDictionary<string, ITag> Browse(bool newTagOnly)
         {
-            //Typically, you would use some enumeration function in the data source you're adapting to to get this list.
-            //  In this example we'll create a single tag, just to demonstrate how to construct the tag,
-            //  but normally you would do this in a loop for all the tags your connector can service
+            Log.Information("Connector adapter browsed, newTagOnly: " + newTagOnly.ToString());
 
+            IDictionary<string, ITag> newTagDict = Browse();
+            if (newTagOnly)
+            {
+                //return difference
+                IDictionary<string, ITag> diffTagDict = new Dictionary<string, ITag>();
+                foreach (string thisTag in newTagDict.Keys)
+                {
+                    if (!_lastTagDict.ContainsKey(thisTag))
+                    {
+                        diffTagDict.Add(thisTag, newTagDict[thisTag]);
+                    }
+                }
+                _lastTagDict = newTagDict;
+                Log.Information("New tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
+                return (IDictionary<string, ITag>)diffTagDict;
+            } else
+            {
+                _lastTagDict = newTagDict;
+                return _lastTagDict;
+            }
+        }
+
+        public static IDictionary<string, ITag> Browse()
+        {
             var myTagDict = new Dictionary<string, ITag>();    //Create the Dictionary (list) of tags
 
-            var myVar = new Variable(); //Create the new Tag variable
-            myVar.Name = "TemperatureSensor";   //Give it a name
-            myVar.TagType = TagType.Double;     //Define the ThinkIQ tag type
-            myVar.Attributes = new Dictionary<string, object>();    //Add Attributes to the Tag
-            myVar.Attributes.Add("DataType", "Double"); //Specify the OPC UA DataType for the Data Source
-            /* UA Data Types are:
-            /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
+            var topics = File.ReadAllLines(Path.Combine(FindDataRoot(), TopicListFile));
+            foreach (var topic in topics)
+            {
+                var myVar = new Variable();
+                myVar.Name = topic;
+                myVar.TagType = TagType.String;
+                myVar.Attributes = new Dictionary<string, object>();
+                myVar.Attributes.Add("DataType", "String");
+                /* UA Data Types are:
+                /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
+                myTagDict.Add(myVar.Name, myVar);
+            }
 
-            myTagDict.Add(myVar.Name, myVar);  //Add the new Tag variable to the Tag list Dictionary
             return myTagDict;  //Return the Tag list Dictionary
         }
 
@@ -88,7 +131,8 @@ namespace CESMII
         /// <returns>A new instance of your Connector's data Reader class</returns>
         public IHistoryReader CreateReader(IDictionary<string, ITag> tagDict, bool acceptStartBoundValue)
         {
-            return new SampleReader(tagDict, acceptStartBoundValue);
+            Log.Information("Connector adapter creating reader for: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagDict));
+            return new MqttReader(tagDict, acceptStartBoundValue);
         }
 
         /// <summary>
@@ -106,6 +150,7 @@ namespace CESMII
         public void SetAcquiredTags(IList<string> tagNameList, bool useAcquiredTagListAsWhiteList)
         {
             //Unless you need customization beyond what is specified in the appsettings, you can leave this implementation empty
+            Log.Information("Connector adapter setting tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagNameList));
         }
 
         /// <summary>
@@ -113,7 +158,32 @@ namespace CESMII
         /// </summary>
         public void Disconnect()
         {
+            Log.Information("Connector adapter asked to disconnect");
             //Perform any necessary disconnect actions for your data source
+        }
+
+        public static string FindDataRoot()
+        {
+            if (dataRoot == "")
+            {
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    dataRoot = @"C:\ProgramData\ThinkIQ\DataRoot";
+                    Console.WriteLine("Hello Windows!\r\n" + dataRoot);
+                }
+                else
+                {
+                    dataRoot = "/opt/thinkiq/dataroot";
+                    Console.WriteLine("Hello *nix!" + dataRoot);
+                }
+            }
+            return dataRoot;
+        }
+
+        public static string Base64Encode(string plainText)
+        {
+            var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+            return System.Convert.ToBase64String(plainTextBytes);
         }
     }
 }

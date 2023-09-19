@@ -1,4 +1,8 @@
-﻿# Install on Windows
+﻿# Pre-requisites
+
+- MQTTService: will be posted elsewhere
+
+# Install on Windows
 
 - Create a new "Custom Connector" on the SMIP.
 - Install .NET Core Runtime 3.1 on the PC where the connector will be installed.
@@ -12,8 +16,8 @@
 - Add reference to your DLL in C:\Program Files\ThinkIQ\SouthBridgeService\appsettings.json (More information [here](appsettings.md))
 ```
     "Connector": {
-      "Assembly": "YourAssembly",
-      "Class": "YourAssembly.YourConnectorFactory",
+      "Assembly": "SmipMqttConnector.MqttConnectorFactory",
+      "Class": "SmipMqttConnector",
       "Params": {
         //Any parameters you need set before your Connector is constructed
       }
