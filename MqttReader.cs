@@ -26,13 +26,6 @@ namespace SmipMqttConnector
             //remember the tagDict requested in the constructor
             _tagDict = tagDict;
             Log.Information("Connector adapter reader constructed for: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagDict));
-            /*using (var sw = new StreamWriter(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicSubscriptionFile)))
-            {
-                foreach (var tag in tagDict)
-                {
-                    sw.WriteLine(tag);
-                }
-            }*/
         }
 
         /// <summary>
@@ -44,6 +37,7 @@ namespace SmipMqttConnector
         /// <returns>A list of ItemData values to be historized by the platform</returns>
         public IList<ItemData> ReadRaw(DateTime startTime, DateTime endTime)
         {
+            Log.Debug("Live read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString());
             var newData = new List<ItemData>();
             if (MqttConnector.ReadCount < 2)
             {
@@ -58,70 +52,45 @@ namespace SmipMqttConnector
             {
                 ItemData myItemData = new ItemData { VSTs = new List<VST>(), Item = tag };  //Create a new ItemData
 
-                //Log.Information("loading cache for tag: " + tag);
+                Log.Debug("loading cached payload for tag: " + tag);
                 if (tag.Contains("/:/"))
                 {
-                    //Log.Information("This is a payload member of a topic!");
+                    Log.Debug("This topic contains parseable data points in its payload, which are treated as tags.");
                     var tagParts = tag.Split(new[] { "/:/" }, StringSplitOptions.None);
                     var useTag = tagParts[0];
                     var usePayload = tagParts[1];
                     var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(useTag) + ".txt"));
 
-                    //Log.Information("Path should be: " + usePath);
-                    //Log.Information("Member should be: " + usePayload);
+                    Log.Debug("Cached payload loading from: " + usePath);
+                    Log.Debug("Payload data member should be: " + usePayload);
                     var useValue = parseJsonPayloadForKey(usePayload, usePath);
-                    //Log.Information("value will be: " + useValue);
-
+                    Log.Debug("Parsed data member value is: " + useValue);
+                    
+                    //Prep data for SMIP
                     myItemData.VSTs.Add(new VST(useValue, 192, endTime));
                     newData.Add(myItemData);
-
                 } else
                 {
-                    //Log.Information("This is a simple topic!");
+                    Log.Debug("This topic contains a single datapoint");
+
                     var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(tag) + ".json"));
-                    //Log.Information("Path should be: " + usePath);
+                    Log.Debug("Cached payload loading from: " + usePath);
                     var useValue = File.ReadAllText(usePath);
-                    //Log.Information("value will be: " + useValue);
+                    Log.Debug("Single datapoint value is: " + useValue);
+                    
                     //Prep data for SMIP
                     myItemData.VSTs.Add(new VST(useValue, 192, startTime));
                     newData.Add(myItemData);
                 }
             }
-
             //return the list of new ItemData points
             return newData;
         }
 
-        /// <summary>
-        /// Clean up the Reader when no longer needed
-        /// </summary>
-        public void Dispose()
-        {
-            Log.Information("Connector adapter told to Dispose!");
-            MqttConnector.ReadCount = 0;
-        }
-
-        private string parseJsonPayloadForKey(string compoundKey, string payloadPath)
-        {
-            compoundKey = compoundKey.Replace("/", ".");
-            using (StreamReader file = File.OpenText(payloadPath))
-            using (JsonTextReader reader = new JsonTextReader(file))
-            {
-                JObject payloadObj = (JObject)JToken.ReadFrom(reader);
-                //Log.Information("Parsed: " + Newtonsoft.Json.JsonConvert.SerializeObject(payloadObj));
-                var value = (string)payloadObj.SelectToken(compoundKey);
-                return value;
-                /*if (payloadObj.TryGetValue(compoundKey, out var val))
-                {
-                    return val.ToString();
-                }*/
-
-            }
-            return "Nope";
-        }
-
+        //TODO: The Mqtt Service only preserves the last payload right now, so historical reads and live data reads are the same
         IList<ItemData> IHistoryReader.ReadRaw(DateTime startTime, DateTime endTime)
         {
+            Log.Debug("Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but not implemented, returning live data instead");
             if (MqttConnector.ReadCount < 1)
             {
                 Log.Information("Connector adapter IHistoryReader reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
@@ -133,6 +102,19 @@ namespace SmipMqttConnector
             return ReadRaw(startTime, endTime);
         }
 
+        private string parseJsonPayloadForKey(string compoundKey, string payloadPath)
+        {
+            compoundKey = compoundKey.Replace("/", ".");
+            using (StreamReader file = File.OpenText(payloadPath))
+            using (JsonTextReader reader = new JsonTextReader(file))
+            {
+                JObject payloadObj = (JObject)JToken.ReadFrom(reader);
+                Log.Debug("Parsed stored payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(payloadObj));
+                var value = (string)payloadObj.SelectToken(compoundKey);
+                return value;
+            }
+        }
+
         bool IHistoryReader.ContainsTag(string tagName)
         {
             Log.Information("Connector adapter asked if it contains tag: " + tagName);
@@ -142,14 +124,14 @@ namespace SmipMqttConnector
 
         IDictionary<string, ITag> IHistoryReader.GetCurrentTags()
         {
-            Log.Information("Connector adapter asked for current tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
+            Log.Information("Connector adapter asked for current tags, returning: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
             return MqttConnector.Browse();
         }
 
         void IDisposable.Dispose()
         {
-            Log.Information("Connector adapter told to IDisposable dispose!");
-            Dispose();
+            Log.Information("Connector adapter told to IDisposable Dispose!");
+            MqttConnector.ReadCount = 0;
         }
     }
 }

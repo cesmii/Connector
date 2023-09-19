@@ -93,7 +93,7 @@ namespace SmipMqttConnector
                     }
                 }
                 _lastTagDict = newTagDict;
-                Log.Information("New tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
+                Log.Information("New tags are: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
                 return (IDictionary<string, ITag>)diffTagDict;
             } else
             {
@@ -104,8 +104,8 @@ namespace SmipMqttConnector
 
         public static IDictionary<string, ITag> Browse()
         {
+            Log.Debug("Connector adapter performing internal Browse...");
             var myTagDict = new Dictionary<string, ITag>();    //Create the Dictionary (list) of tags
-
             var topics = File.ReadAllLines(Path.Combine(FindDataRoot(), TopicListFile));
             foreach (var topic in topics)
             {
@@ -118,7 +118,7 @@ namespace SmipMqttConnector
                 /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
                 myTagDict.Add(myVar.Name, myVar);
             }
-
+            Log.Debug("Browsed tag list was: " + Newtonsoft.Json.JsonConvert.SerializeObject(myTagDict));
             return myTagDict;  //Return the Tag list Dictionary
         }
 

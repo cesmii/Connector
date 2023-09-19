@@ -48,7 +48,7 @@ namespace SmipMqttConnector
         /// <returns>A new ConnectorConfig instance</returns>
         public IConnectorConfig GetConfig()
         {
-            Log.Information("Connector adapter configured!");
+            Log.Information("Connector adapter configuration requested");
             return new MqttConnectorConfig();
         }
 

@@ -6,7 +6,7 @@ net stop ThinkIQ.SouthBridge.Service
 
 echo Copying files...
 del "C:\Program Files\ThinkIQ\SouthBridgeService\Logs\*.txt"
-copy "C:\Users\jonwise\Projects\SmipMqttConnector\bin\Debug\netstandard2.0\SmipMqttConnector.*" "C:\Program Files\ThinkIQ\SouthBridgeService\" /Y
+copy "bin\Debug\netstandard2.0\SmipMqttConnector.*" "C:\Program Files\ThinkIQ\SouthBridgeService\" /Y
 
 echo Starting Services...
 net start ThinkIQ.Opc.Ua.NorthService
