@@ -57,30 +57,44 @@ namespace SmipMqttConnector
                 {
                     Log.Debug("This topic contains parseable data points in its payload, which are treated as tags.");
                     var tagParts = tag.Split(new[] { "/:/" }, StringSplitOptions.None);
-                    var useTag = tagParts[0];
-                    var usePayload = tagParts[1];
-                    var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(useTag) + ".txt"));
+                    if (tagParts.Length > 1)
+                    {
+                        var useTag = tagParts[0];
+                        var usePayload = tagParts[1];
+                        var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(useTag) + ".txt"));
 
-                    Log.Debug("Cached payload loading from: " + usePath);
-                    Log.Debug("Payload data member should be: " + usePayload);
-                    var useValue = parseJsonPayloadForKey(usePayload, usePath);
-                    Log.Debug("Parsed data member value is: " + useValue);
-                    
-                    //Prep data for SMIP
-                    myItemData.VSTs.Add(new VST(useValue, 192, endTime));
-                    newData.Add(myItemData);
+                        Log.Debug("Cached payload loading from: " + usePath);
+                        Log.Debug("Payload data member should be: " + usePayload);
+                        var useValue = parseJsonPayloadForKey(usePayload, usePath);
+                        if (useValue != null)
+                        {
+                            Log.Debug("Parsed data member value is: " + useValue);
+                            //Prep data for SMIP
+                            myItemData.VSTs.Add(new VST(useValue, 192, endTime));
+                            newData.Add(myItemData);
+                        }
+                    } else
+                    {
+                        Log.Error("The topic structure was corrupted, the data will be skipped, but processing should be able to continue.");
+                    }
                 } else
                 {
                     Log.Debug("This topic contains a single datapoint");
-
                     var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(tag) + ".json"));
                     Log.Debug("Cached payload loading from: " + usePath);
-                    var useValue = File.ReadAllText(usePath);
-                    Log.Debug("Single datapoint value is: " + useValue);
-                    
-                    //Prep data for SMIP
-                    myItemData.VSTs.Add(new VST(useValue, 192, startTime));
-                    newData.Add(myItemData);
+                    try {
+                        string useValue = File.ReadAllText(usePath);
+                        Log.Debug("Single datapoint value is: " + useValue);
+
+                        //Prep data for SMIP
+                        myItemData.VSTs.Add(new VST(useValue, 192, startTime));
+                        newData.Add(myItemData);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error("An error occurred reading the topic payload history file: " + usePath);
+                        Log.Error(ex.Message);
+                    }                   
                 }
             }
             //return the list of new ItemData points
@@ -90,7 +104,7 @@ namespace SmipMqttConnector
         //TODO: The Mqtt Service only preserves the last payload right now, so historical reads and live data reads are the same
         IList<ItemData> IHistoryReader.ReadRaw(DateTime startTime, DateTime endTime)
         {
-            Log.Debug("Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but not implemented, returning live data instead");
+            Log.Information("Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but not historical read is not implemented, returning live data instead");
             if (MqttConnector.ReadCount < 1)
             {
                 Log.Information("Connector adapter IHistoryReader reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
@@ -104,22 +118,37 @@ namespace SmipMqttConnector
 
         private string parseJsonPayloadForKey(string compoundKey, string payloadPath)
         {
-            compoundKey = compoundKey.Replace("/", ".");
-            using (StreamReader file = File.OpenText(payloadPath))
-            using (JsonTextReader reader = new JsonTextReader(file))
-            {
-                JObject payloadObj = (JObject)JToken.ReadFrom(reader);
-                Log.Debug("Parsed stored payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(payloadObj));
-                var value = (string)payloadObj.SelectToken(compoundKey);
-                return value;
+            try {
+                compoundKey = compoundKey.Replace("/", ".");
+                using (StreamReader file = File.OpenText(payloadPath))
+                using (JsonTextReader reader = new JsonTextReader(file))
+                {
+                    JObject payloadObj = (JObject)JToken.ReadFrom(reader);
+                    Log.Debug("Parsed stored payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(payloadObj));
+                    var value = (string)payloadObj.SelectToken(compoundKey);
+                    return value;
+                }
+            } 
+            catch(Exception ex) {
+                Log.Error("A MQTT payload could not be loaded or parsed, data will be skipped, but processing should be able to continue.");
+                Log.Error(ex.Message);
             }
+            return null;
         }
 
         bool IHistoryReader.ContainsTag(string tagName)
         {
             Log.Information("Connector adapter asked if it contains tag: " + tagName);
-            var topics = File.ReadAllLines(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
-            return Array.IndexOf(topics, tagName) != -1;
+            try {
+                var topics = File.ReadAllLines(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
+                return Array.IndexOf(topics, tagName) != -1;
+            }
+            catch (Exception ex)
+            {
+                Log.Error("An error occurred reading the topic list file: " + Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
+                Log.Error(ex.Message);
+                return false;
+            }
         }
 
         IDictionary<string, ITag> IHistoryReader.GetCurrentTags()

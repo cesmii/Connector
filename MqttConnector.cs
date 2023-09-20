@@ -42,9 +42,6 @@ namespace SmipMqttConnector
         /// <returns>True or False indicating a successful connection.</returns>
         public bool Connect(IConnectorInfo info)
         {
-            //Perform the actual connection to your data source
-            IsConnected = false;
-
             if (info.Attributes == null)
                 return false;
 
@@ -66,8 +63,9 @@ namespace SmipMqttConnector
 
             Log.Information("Connector adapter connected!");
 
+            //TODO: Determine if the helper service is running, and send an accurate answer
             IsConnected = true;
-            return IsConnected;
+            return true;
 
         }
 
@@ -83,7 +81,7 @@ namespace SmipMqttConnector
             IDictionary<string, ITag> newTagDict = Browse();
             if (newTagOnly)
             {
-                //return difference
+                //determine difference between old tag list and new
                 IDictionary<string, ITag> diffTagDict = new Dictionary<string, ITag>();
                 foreach (string thisTag in newTagDict.Keys)
                 {
@@ -94,7 +92,7 @@ namespace SmipMqttConnector
                 }
                 _lastTagDict = newTagDict;
                 Log.Information("New tags are: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
-                return (IDictionary<string, ITag>)diffTagDict;
+                return diffTagDict;
             } else
             {
                 _lastTagDict = newTagDict;
@@ -106,20 +104,26 @@ namespace SmipMqttConnector
         {
             Log.Debug("Connector adapter performing internal Browse...");
             var myTagDict = new Dictionary<string, ITag>();    //Create the Dictionary (list) of tags
-            var topics = File.ReadAllLines(Path.Combine(FindDataRoot(), TopicListFile));
-            foreach (var topic in topics)
-            {
-                var myVar = new Variable();
-                myVar.Name = topic;
-                myVar.TagType = TagType.String;
-                myVar.Attributes = new Dictionary<string, object>();
-                myVar.Attributes.Add("DataType", "String");
-                /* UA Data Types are:
-                /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
-                myTagDict.Add(myVar.Name, myVar);
+            try {
+                var topics = File.ReadAllLines(Path.Combine(FindDataRoot(), TopicListFile));
+                foreach (var topic in topics)
+                {
+                    var myVar = new Variable();
+                    myVar.Name = topic;
+                    myVar.TagType = TagType.String;
+                    myVar.Attributes = new Dictionary<string, object>();
+                    myVar.Attributes.Add("DataType", "String");
+                    /* UA Data Types are:
+                    /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
+                    myTagDict.Add(myVar.Name, myVar);
+                }
+                Log.Debug("Browsed tag list was: " + Newtonsoft.Json.JsonConvert.SerializeObject(myTagDict));
             }
-            Log.Debug("Browsed tag list was: " + Newtonsoft.Json.JsonConvert.SerializeObject(myTagDict));
-            return myTagDict;  //Return the Tag list Dictionary
+            catch (Exception ex) {
+                Log.Error("An error occurred reading the topic list file: " + Path.Combine(FindDataRoot(), TopicListFile));
+                Log.Error(ex.Message);
+            }
+            return myTagDict;
         }
 
         /// <summary>
@@ -169,12 +173,12 @@ namespace SmipMqttConnector
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     dataRoot = @"C:\ProgramData\ThinkIQ\DataRoot";
-                    Console.WriteLine("Hello Windows!\r\n" + dataRoot);
+                    Log.Information("Connector adapter starting on Windows with data root: " + dataRoot);
                 }
                 else
                 {
                     dataRoot = "/opt/thinkiq/dataroot";
-                    Console.WriteLine("Hello *nix!" + dataRoot);
+                    Log.Information("Connector adapter starting on *nix with data root: " + dataRoot);
                 }
             }
             return dataRoot;
