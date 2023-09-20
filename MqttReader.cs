@@ -104,9 +104,9 @@ namespace SmipMqttConnector
         //TODO: The Mqtt Service only preserves the last payload right now, so historical reads and live data reads are the same
         IList<ItemData> IHistoryReader.ReadRaw(DateTime startTime, DateTime endTime)
         {
-            Log.Information("Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but not historical read is not implemented, returning live data instead");
             if (MqttConnector.ReadCount < 1)
             {
+                Log.Information("Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but historical read is not implemented, returning live data instead.");
                 Log.Information("Connector adapter IHistoryReader reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
             } else
             {
