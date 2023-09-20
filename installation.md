@@ -84,7 +84,11 @@
     + `sudo systemctl start tiq-south-bridge.service` 
 - Logs for troubleshooting can be found at `/opt/thinkiq/logs/south`
 
-# Uninstall
+# Uninstall on Linux
 
 - `sudo apt remove tiq-gateway`
 - Ensure there are no remaining contents in `/opt/thinkiq/`
+
+# Additional Linux Instructions
+
+Read ThinkIQ's instructions [here](https://help.thinkiq.com/knowledge-base/data-connectivity/opc-ua-linux-installation)
