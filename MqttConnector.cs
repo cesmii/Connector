@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using ThinkIQ.DataManagement;
 
 namespace SmipMqttConnector
@@ -78,19 +80,6 @@ namespace SmipMqttConnector
         public IDictionary<string, ITag> Browse(bool newTagOnly)
         {
             Log.Information("Connector adapter browsed, newTagOnly: " + newTagOnly.ToString());
-            IDictionary<string, ITag> oldTagDict = new Dictionary<string, ITag>();
-            /*
-            try
-            {
-                oldTagDict = _lastTagDict;
-            }
-            catch (Exception ex)
-            {
-                //This is a hack, because I don't understand the lifecycle here.
-                // Without it, the initial browse fails because the static internal variable is not set to an instance of an Object
-                // How is that even possible?
-                Log.Debug("Warning: attempt to access the _lastTagDict failed, possibily it hasn't been constructed yet or something?");
-            }*/
             IDictionary<string, ITag> newTagDict = Browse();
             Log.Debug("Back in outer browse with newTagDict count: " + newTagDict.Count);
             if (newTagOnly && newTagDict.Count > 0 && _lastTagDict.Count > 0)
@@ -106,13 +95,44 @@ namespace SmipMqttConnector
                     }
                 }
                 _lastTagDict = newTagDict;
-                Log.Information("Returning only new tag list: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
+                Log.Information("Returning only new tag list, " + diffTagDict.Count + ": " + diffTagDict.ToString());
+                if (diffTagDict.Count > 0)
+                {
+                    Task.Run(() => CycleSouthBridgeService());
+                }
                 return diffTagDict;
             } else
             {
-                Log.Information("Returning full known tag list: " +  _lastTagDict.ToString());
+                Log.Information("Returning full known tag list: " +  _lastTagDict.Count);
                 _lastTagDict = newTagDict;
                 return _lastTagDict;
+            }
+        }
+
+        [Obsolete("This method should not be necessary, but the Cloud doesn't update otherwise. Need to use until fixed.")]
+        private static async void CycleSouthBridgeService()
+        {
+            Log.Warning("SouthBridge Service will be cycled to force tag reload");
+            Thread.Sleep(5000);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                System.Diagnostics.Process p = new System.Diagnostics.Process();
+                Log.Warning("SouthBridge Service stopping.");
+                p.StartInfo.FileName = "net stop ThinkIQ.SouthBridge.Service";
+                p.StartInfo.UseShellExecute = true;
+                p.Start();
+                Thread.Sleep(5000);
+                Log.Warning("SouthBridge Service starting.");
+                p.StartInfo.FileName = "net start ThinkIQ.SouthBridge.Service";
+                p.StartInfo.UseShellExecute = true;
+                p.Start();
+            }
+            else
+            {
+                System.Diagnostics.Process p = new System.Diagnostics.Process();
+                p.StartInfo.FileName = "systemctl reload tiq-south-bridge";
+                p.StartInfo.UseShellExecute = true;
+                p.Start();
             }
         }
 
@@ -142,7 +162,7 @@ namespace SmipMqttConnector
                     /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
                     myTagDict.Add(myVar.Name, myVar);
                 }
-                Log.Debug("Browsed tag list was: " + Newtonsoft.Json.JsonConvert.SerializeObject(myTagDict));
+                Log.Debug("Browsed tag list: " + myTagDict.Count);
             }
             catch (Exception ex) {
                 Log.Error("An error occurred reading the topic list file: " + Path.Combine(FindDataRoot(), TopicListFile));
