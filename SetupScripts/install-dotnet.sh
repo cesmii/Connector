@@ -2,7 +2,13 @@
 echo Configuring .NET Core 3.1
 
 echo Getting .NET Package...
-wget https://download.visualstudio.microsoft.com/download/pr/79f1cf3e-ccc7-4de4-9f4c-1a6e061cb867/68cab78b3f9a5a8ce2f275b983204376/dotnet-sdk-3.1.426-linux-arm64.tar.gz
+if [ "$(arch)" == "armv7l" ]; then
+   echo 32-Bit ARM Detected:
+   wget https://download.visualstudio.microsoft.com/download/pr/79f1cf3e-ccc7-4de4-9f4c-1a6e061cb867/68cab78b3f9a5a8ce2f275b983204376/dotnet-sdk-3.1.426-linux-arm64.tar.gz
+else
+   echo 64-Bit ARM Assumed:
+   wget https://download.visualstudio.microsoft.com/download/pr/2043e641-977d-43ac-b42a-f47fd9ee79ba/5b10d12a0626adaed720358ab8ad0b7e/dotnet-sdk-3.1.426-linux-arm.tar.gz
+fi
 
 echo Unpacking...
 mkdir -p $HOME/.dotnet
