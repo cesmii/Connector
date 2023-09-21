@@ -7,10 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Remove="appsettings.mqtt.json" />
       <None Remove="deploy.bat" />
     </ItemGroup>
 
     <ItemGroup>
+      <Content Include="appsettings.mqtt.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
       <Content Include="deploy.bat">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>

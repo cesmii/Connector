@@ -16,8 +16,8 @@
 - Add reference to your DLL in C:\Program Files\ThinkIQ\SouthBridgeService\appsettings.json (More information [here](appsettings.md))
 ```
     "Connector": {
-      "Assembly": "SmipMqttConnector.MqttConnectorFactory",
-      "Class": "SmipMqttConnector",
+      "Assembly": "SmipMqttConnector",
+      "Class": "SmipMqttConnector.MqttConnectorFactory",
       "Params": {
         //Any parameters you need set before the Connector is constructed
       }
@@ -46,8 +46,8 @@
 
 ```
     "Connector": {
-      "Assembly": "SmipMqttConnector.MqttConnectorFactory",
-      "Class": "SmipMqttConnector",
+      "Assembly": "SmipMqttConnector",
+      "Class": "SmipMqttConnector.MqttConnectorFactory",
       "Params": {
         //Any parameters you need set before the Connector is constructed
       }

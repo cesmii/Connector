@@ -6,6 +6,8 @@ using System.IO;
 using Newtonsoft.Json;
 using ThinkIQ.DataManagement;
 using Newtonsoft.Json.Linq;
+using System.Data;
+using System.Text;
 
 namespace SmipMqttConnector
 {
@@ -83,6 +85,7 @@ namespace SmipMqttConnector
                     var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(tag) + ".json"));
                     Log.Debug("Cached payload loading from: " + usePath);
                     try {
+                        //TODO: Probably should use a StreamReader here for safety
                         string useValue = File.ReadAllText(usePath);
                         Log.Debug("Single datapoint value is: " + useValue);
 
@@ -140,8 +143,18 @@ namespace SmipMqttConnector
         {
             Log.Information("Connector adapter asked if it contains tag: " + tagName);
             try {
-                var topics = File.ReadAllLines(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
-                return Array.IndexOf(topics, tagName) != -1;
+                //var topics = File.ReadAllLines(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
+                List<string> topics = new List<string>();
+                using (var fs = new FileStream(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (var sr = new StreamReader(fs, Encoding.Default))
+                {
+                    while (!sr.EndOfStream)
+                    {
+                        topics.Add(sr.ReadLine());
+                    }
+                }
+                return topics.Contains(tagName);
+                //return Array.IndexOf(topics, tagName) != -1;
             }
             catch (Exception ex)
             {

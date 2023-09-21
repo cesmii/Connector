@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using ThinkIQ.DataManagement;
 
 namespace SmipMqttConnector
@@ -23,11 +24,11 @@ namespace SmipMqttConnector
         public static int ReadCount = 0;
         private bool IsConnected = false;
         private static string dataRoot = "";
-        internal IDictionary<string, ITag> _lastTagDict { get; set; }
+        internal static IDictionary<string, ITag> _lastTagDict = new Dictionary<string, ITag>();
 
         public static string HistRoot = "MqttHist";
         public static string TopicListFile = "MqttTopicList.json";
-        public static string TopicSubscriptionFile = "CloudAcquiredTagList.txt";
+        public static string TopicSubscriptionFile = "CloudAcquiredTopicList.txt";
 
         bool IDataSource.IsConnected { get => IsConnected; }
 
@@ -77,10 +78,24 @@ namespace SmipMqttConnector
         public IDictionary<string, ITag> Browse(bool newTagOnly)
         {
             Log.Information("Connector adapter browsed, newTagOnly: " + newTagOnly.ToString());
-
-            IDictionary<string, ITag> newTagDict = Browse();
-            if (newTagOnly)
+            IDictionary<string, ITag> oldTagDict = new Dictionary<string, ITag>();
+            /*
+            try
             {
+                oldTagDict = _lastTagDict;
+            }
+            catch (Exception ex)
+            {
+                //This is a hack, because I don't understand the lifecycle here.
+                // Without it, the initial browse fails because the static internal variable is not set to an instance of an Object
+                // How is that even possible?
+                Log.Debug("Warning: attempt to access the _lastTagDict failed, possibily it hasn't been constructed yet or something?");
+            }*/
+            IDictionary<string, ITag> newTagDict = Browse();
+            Log.Debug("Back in outer browse with newTagDict count: " + newTagDict.Count);
+            if (newTagOnly && newTagDict.Count > 0 && _lastTagDict.Count > 0)
+            {
+                Log.Debug("Doing newTagOnly logic");
                 //determine difference between old tag list and new
                 IDictionary<string, ITag> diffTagDict = new Dictionary<string, ITag>();
                 foreach (string thisTag in newTagDict.Keys)
@@ -91,10 +106,11 @@ namespace SmipMqttConnector
                     }
                 }
                 _lastTagDict = newTagDict;
-                Log.Information("New tags are: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
+                Log.Information("Returning only new tag list: " + Newtonsoft.Json.JsonConvert.SerializeObject(diffTagDict));
                 return diffTagDict;
             } else
             {
+                Log.Information("Returning full known tag list: " +  _lastTagDict.ToString());
                 _lastTagDict = newTagDict;
                 return _lastTagDict;
             }
@@ -102,10 +118,19 @@ namespace SmipMqttConnector
 
         public static IDictionary<string, ITag> Browse()
         {
-            Log.Debug("Connector adapter performing internal Browse...");
-            var myTagDict = new Dictionary<string, ITag>();    //Create the Dictionary (list) of tags
+            Log.Information("Connector adapter performing internal Browse...");
+            var myTagDict = new Dictionary<string, ITag>();
             try {
-                var topics = File.ReadAllLines(Path.Combine(FindDataRoot(), TopicListFile));
+                List<string> topics = new List<string>();
+                using (var fs = new FileStream(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile), FileMode.OpenOrCreate, FileAccess.Read, FileShare.ReadWrite))
+                using (var sr = new StreamReader(fs, Encoding.Default))
+                {
+                    while (!sr.EndOfStream)
+                    {
+                        topics.Add(sr.ReadLine());
+                    }
+                }
+                Log.Debug("Discovered topic list: " + Newtonsoft.Json.JsonConvert.SerializeObject(topics));
                 foreach (var topic in topics)
                 {
                     var myVar = new Variable();
@@ -123,6 +148,7 @@ namespace SmipMqttConnector
                 Log.Error("An error occurred reading the topic list file: " + Path.Combine(FindDataRoot(), TopicListFile));
                 Log.Error(ex.Message);
             }
+            Log.Debug("Done inner browse");
             return myTagDict;
         }
 
@@ -177,7 +203,7 @@ namespace SmipMqttConnector
                 }
                 else
                 {
-                    dataRoot = "/opt/thinkiq/dataroot";
+                    dataRoot = "/opt/thinkiq/DataRoot";
                     Log.Information("Connector adapter starting on *nix with data root: " + dataRoot);
                 }
             }
