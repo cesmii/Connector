@@ -21,7 +21,7 @@ namespace SmipMqttConnector
         {
             _parameters = parameters;   //remember the parameters that were passed in.
 
-            Log.Information("Connector adapter initialized with parameters: " + Newtonsoft.Json.JsonConvert.SerializeObject(parameters));
+            Log.Information("MQTT Adapter: Initialized with parameters " + Newtonsoft.Json.JsonConvert.SerializeObject(parameters));
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace SmipMqttConnector
         {
             var myConnector = new MqttConnector();
             myConnector.Parameters = _parameters;   //Set the Connector Parameters property to equal the parameters value we remembered during Initialize
-            Log.Information("Connector adapter created!");
+            Log.Information("MQTT Adapter: Created by South Bridge Service");
             return myConnector;
 
             /* More concise way to write the above
@@ -48,7 +48,7 @@ namespace SmipMqttConnector
         /// <returns>A new ConnectorConfig instance</returns>
         public IConnectorConfig GetConfig()
         {
-            Log.Information("Connector adapter configuration requested");
+            Log.Information("MQTT Adapter: Configuration requested");
             return new MqttConnectorConfig();
         }
 

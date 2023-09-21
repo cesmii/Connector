@@ -64,7 +64,7 @@ namespace SmipMqttConnector
                 }
             }
 
-            Log.Information("Connector adapter connected!");
+            Log.Information("MQTT Adapter: Connected!");
 
             //TODO: Determine if the helper service is running, and send an accurate answer
             IsConnected = true;
@@ -79,12 +79,12 @@ namespace SmipMqttConnector
         /// <returns>A list of tag names that this Connector can service</returns>
         public IDictionary<string, ITag> Browse(bool newTagOnly)
         {
-            Log.Information("Connector adapter browsed, newTagOnly: " + newTagOnly.ToString());
+            Log.Information("MQTT Adapter: Browsed, newTagOnly: " + newTagOnly.ToString());
             IDictionary<string, ITag> newTagDict = Browse();
-            Log.Debug("Back in outer browse with newTagDict count: " + newTagDict.Count);
+            Log.Debug("MQTT Adapter: Back in outer browse with newTagDict count: " + newTagDict.Count);
             if (newTagOnly && newTagDict.Count > 0 && _lastTagDict.Count > 0)
             {
-                Log.Debug("Doing newTagOnly logic");
+                Log.Debug("MQTT Adapter: Doing newTagOnly logic");
                 //determine difference between old tag list and new
                 IDictionary<string, ITag> diffTagDict = new Dictionary<string, ITag>();
                 foreach (string thisTag in newTagDict.Keys)
@@ -95,7 +95,8 @@ namespace SmipMqttConnector
                     }
                 }
                 _lastTagDict = newTagDict;
-                Log.Information("Returning only new tag list, " + diffTagDict.Count + ": " + diffTagDict.ToString());
+                Log.Information("MQTT Adapter: Returning only new tag list, " + diffTagDict.Count);
+                Newtonsoft.Json.JsonConvert.SerializeObject(_lastTagDict);
                 if (diffTagDict.Count > 0)
                 {
                     Task.Run(() => CycleSouthBridgeService());
@@ -103,8 +104,8 @@ namespace SmipMqttConnector
                 return diffTagDict;
             } else
             {
-                Log.Information("Returning full known tag list: " +  _lastTagDict.Count);
                 _lastTagDict = newTagDict;
+                Log.Information("MQTT Adapter: Returning full known tag list: " + _lastTagDict.Count);
                 return _lastTagDict;
             }
         }
@@ -112,17 +113,17 @@ namespace SmipMqttConnector
         [Obsolete("This method should not be necessary, but the Cloud doesn't update otherwise. Need to use until fixed.")]
         private static async void CycleSouthBridgeService()
         {
-            Log.Warning("SouthBridge Service will be cycled to force tag reload");
+            Log.Warning("MQTT Adapter: SouthBridge Service will be cycled to force tag reload");
             Thread.Sleep(5000);
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 System.Diagnostics.Process p = new System.Diagnostics.Process();
-                Log.Warning("SouthBridge Service stopping.");
+                Log.Warning("MQTT Adapter: SouthBridge Service stopping.");
                 p.StartInfo.FileName = "net stop ThinkIQ.SouthBridge.Service";
                 p.StartInfo.UseShellExecute = true;
                 p.Start();
                 Thread.Sleep(5000);
-                Log.Warning("SouthBridge Service starting.");
+                Log.Warning("MQTT Adapter: SouthBridge Service starting.");
                 p.StartInfo.FileName = "net start ThinkIQ.SouthBridge.Service";
                 p.StartInfo.UseShellExecute = true;
                 p.Start();
@@ -130,7 +131,8 @@ namespace SmipMqttConnector
             else
             {
                 System.Diagnostics.Process p = new System.Diagnostics.Process();
-                p.StartInfo.FileName = "systemctl reload tiq-south-bridge";
+                Log.Warning("MQTT Adapter: SouthBridge Service cycling now.");
+                p.StartInfo.FileName = Path.Combine(MqttConnector.FindDataRoot(), "southbridge-cycle.sh");
                 p.StartInfo.UseShellExecute = true;
                 p.Start();
             }
@@ -138,7 +140,7 @@ namespace SmipMqttConnector
 
         public static IDictionary<string, ITag> Browse()
         {
-            Log.Information("Connector adapter performing internal Browse...");
+            Log.Information("MQTT Adapter: Doing internal Browse...");
             var myTagDict = new Dictionary<string, ITag>();
             try {
                 List<string> topics = new List<string>();
@@ -150,7 +152,7 @@ namespace SmipMqttConnector
                         topics.Add(sr.ReadLine());
                     }
                 }
-                Log.Debug("Discovered topic list: " + Newtonsoft.Json.JsonConvert.SerializeObject(topics));
+                Log.Debug("MQTT Adapter: Discovered topic list: " + Newtonsoft.Json.JsonConvert.SerializeObject(topics));
                 foreach (var topic in topics)
                 {
                     var myVar = new Variable();
@@ -162,13 +164,13 @@ namespace SmipMqttConnector
                     /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
                     myTagDict.Add(myVar.Name, myVar);
                 }
-                Log.Debug("Browsed tag list: " + myTagDict.Count);
+                Log.Debug("MQTT Adapter: Browsed tag list: " + myTagDict.Count);
             }
             catch (Exception ex) {
-                Log.Error("An error occurred reading the topic list file: " + Path.Combine(FindDataRoot(), TopicListFile));
+                Log.Error("MQTT Adapter: An error occurred reading the topic list file: " + Path.Combine(FindDataRoot(), TopicListFile));
                 Log.Error(ex.Message);
             }
-            Log.Debug("Done inner browse");
+            Log.Debug("MQTT Adapter: Inner Browse complete");
             return myTagDict;
         }
 
@@ -181,7 +183,7 @@ namespace SmipMqttConnector
         /// <returns>A new instance of your Connector's data Reader class</returns>
         public IHistoryReader CreateReader(IDictionary<string, ITag> tagDict, bool acceptStartBoundValue)
         {
-            Log.Information("Connector adapter creating reader for: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagDict));
+            Log.Information("MQTT Adapter: Creating reader for: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagDict));
             return new MqttReader(tagDict, acceptStartBoundValue);
         }
 
@@ -199,17 +201,7 @@ namespace SmipMqttConnector
         /// </param>
         public void SetAcquiredTags(IList<string> tagNameList, bool useAcquiredTagListAsWhiteList)
         {
-            //Unless you need customization beyond what is specified in the appsettings, you can leave this implementation empty
-            Log.Information("Connector adapter setting tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagNameList));
-            
-            //don't need to write this if successfully sharing thinkiqs
-            /*using (var sw = new StreamWriter(Path.Combine(FindDataRoot(), TopicSubscriptionFile), false))
-            {
-                foreach (var tagName in tagNameList)
-                {
-                    sw.WriteLine(tagName);
-                }
-            }*/
+            Log.Information("MQTT Adapter: Setting acquired tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagNameList));
         }
 
         /// <summary>
@@ -217,7 +209,7 @@ namespace SmipMqttConnector
         /// </summary>
         public void Disconnect()
         {
-            Log.Information("Connector adapter asked to disconnect");
+            Log.Information("MQTT Adapter: Asked to disconnect");
             //Perform any necessary disconnect actions for your data source
         }
 
@@ -228,12 +220,12 @@ namespace SmipMqttConnector
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
                     dataRoot = @"C:\ProgramData\ThinkIQ\DataRoot";
-                    Log.Information("Connector adapter starting on Windows with data root: " + dataRoot);
+                    Log.Information("MQTT Adapter: Starting on Windows with data root: " + dataRoot);
                 }
                 else
                 {
                     dataRoot = "/opt/thinkiq/DataRoot";
-                    Log.Information("Connector adapter starting on *nix with data root: " + dataRoot);
+                    Log.Information("MQTT Adapter: starting on *nix with data root: " + dataRoot);
                 }
             }
             return dataRoot;

@@ -27,7 +27,7 @@ namespace SmipMqttConnector
         {
             //remember the tagDict requested in the constructor
             _tagDict = tagDict;
-            Log.Information("Connector adapter reader constructed for: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagDict));
+            Log.Information("MQTT Adapter: Reader created for: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagDict));
         }
 
         /// <summary>
@@ -39,25 +39,25 @@ namespace SmipMqttConnector
         /// <returns>A list of ItemData values to be historized by the platform</returns>
         public IList<ItemData> ReadRaw(DateTime startTime, DateTime endTime)
         {
-            Log.Debug("Live read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString());
+            Log.Debug("MQTT Adapter: Servicing read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString());
             var newData = new List<ItemData>();
             if (MqttConnector.ReadCount < 2)
             {
-                Log.Information("Connector adapter IList reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
+                Log.Information("MQTT Adapter: IList reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
             }
             else
             {
-                Log.Information("Connector adapter IList reading raw.");
+                Log.Information("MQTT Adapter: IList reading raw.");
             }
             
             foreach (var tag in _tagDict.Keys)  //for each of the tags this Reader was created to service
             {
                 ItemData myItemData = new ItemData { VSTs = new List<VST>(), Item = tag };  //Create a new ItemData
 
-                Log.Debug("loading cached payload for tag: " + tag);
+                Log.Debug("MQTT Adapter: Loading cached payload for tag: " + tag);
                 if (tag.Contains("/:/"))
                 {
-                    Log.Debug("This topic contains parseable data points in its payload, which are treated as tags.");
+                    Log.Debug("MQTT Adapter: Requested topic contains parseable data points in its payload, which will be treated as tags.");
                     var tagParts = tag.Split(new[] { "/:/" }, StringSplitOptions.None);
                     if (tagParts.Length > 1)
                     {
@@ -65,29 +65,29 @@ namespace SmipMqttConnector
                         var usePayload = tagParts[1];
                         var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(useTag) + ".txt"));
 
-                        Log.Debug("Cached payload loading from: " + usePath);
-                        Log.Debug("Payload data member should be: " + usePayload);
+                        Log.Debug("MQTT Adapter: Loading cached payload from: " + usePath);
+                        Log.Debug("MQTT Adapter: Payload data member: " + usePayload);
                         var useValue = parseJsonPayloadForKey(usePayload, usePath);
                         if (useValue != null)
                         {
-                            Log.Debug("Parsed data member value is: " + useValue);
+                            Log.Debug("MQTT Adapter: Parsed data member value: " + useValue);
                             //Prep data for SMIP
                             myItemData.VSTs.Add(new VST(useValue, 192, endTime));
                             newData.Add(myItemData);
                         }
                     } else
                     {
-                        Log.Error("The topic structure was corrupted, the data will be skipped, but processing should be able to continue.");
+                        Log.Warning("MQTT Adapter: The topic structure was corrupted, the data will be skipped, but processing should be able to continue.");
                     }
                 } else
                 {
-                    Log.Debug("This topic contains a single datapoint");
+                    Log.Debug("MQTT Adapter: Requested topic contains a single datapoint");
                     var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(tag) + ".txt"));
-                    Log.Debug("Cached payload loading from: " + usePath);
+                    Log.Debug("MQTT Adapter: Loading cached payload from: " + usePath);
                     try {
                         //TODO: Probably should use a StreamReader here for safety
                         string useValue = File.ReadAllText(usePath);
-                        Log.Debug("Single datapoint value is: " + useValue);
+                        Log.Debug("MQTT Adapter: Single datapoint value: " + useValue);
 
                         //Prep data for SMIP
                         myItemData.VSTs.Add(new VST(useValue, 192, startTime));
@@ -95,8 +95,8 @@ namespace SmipMqttConnector
                     }
                     catch (Exception ex)
                     {
-                        Log.Error("An error occurred reading the topic payload history file: " + usePath);
-                        Log.Error(ex.Message);
+                        Log.Error("MQTT Adapter: An error occurred reading the topic payload history file " + usePath);
+                        Log.Error("MQTT Adapter: " + ex.Message);
                     }                   
                 }
             }
@@ -109,11 +109,11 @@ namespace SmipMqttConnector
         {
             if (MqttConnector.ReadCount < 1)
             {
-                Log.Information("Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but historical read is not implemented, returning live data instead.");
-                Log.Information("Connector adapter IHistoryReader reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
+                Log.Information("MQTT Adapter: Historical read requested for " + startTime.ToShortTimeString() + " through " + endTime.ToShortTimeString() + " but historical read is not implemented, returning live data instead.");
+                Log.Information("MQTT Adapter: IHistoryReader reading raw for: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
             } else
             {
-                Log.Information("Connector adapter IHistoryReader reading raw.");
+                Log.Information("MQTT Adapter: IHistoryReader reading raw.");
             }
             MqttConnector.ReadCount = MqttConnector.ReadCount + 1;
             return ReadRaw(startTime, endTime);
@@ -127,21 +127,21 @@ namespace SmipMqttConnector
                 using (JsonTextReader reader = new JsonTextReader(file))
                 {
                     JObject payloadObj = (JObject)JToken.ReadFrom(reader);
-                    Log.Debug("Parsed stored payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(payloadObj));
+                    Log.Debug("MQTT Adapter: Parsed stored payload: " + Newtonsoft.Json.JsonConvert.SerializeObject(payloadObj));
                     var value = (string)payloadObj.SelectToken(compoundKey);
                     return value;
                 }
             } 
             catch(Exception ex) {
-                Log.Error("A MQTT payload could not be loaded or parsed, data will be skipped, but processing should be able to continue.");
-                Log.Error(ex.Message);
+                Log.Warning("MQTT Adapter: A MQTT payload could not be loaded or parsed, data will be skipped, but processing should be able to continue.");
+                Log.Warning(ex.Message);
             }
             return null;
         }
 
         bool IHistoryReader.ContainsTag(string tagName)
         {
-            Log.Information("Connector adapter asked if it contains tag: " + tagName);
+            Log.Information("MQTT Adapter: Incoming ContainsTag query " + tagName);
             try {
                 //var topics = File.ReadAllLines(Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
                 List<string> topics = new List<string>();
@@ -158,21 +158,21 @@ namespace SmipMqttConnector
             }
             catch (Exception ex)
             {
-                Log.Error("An error occurred reading the topic list file: " + Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
-                Log.Error(ex.Message);
+                Log.Error("MQTT Adapter: An error occurred reading the topic list file: " + Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.TopicListFile));
+                Log.Error("MQTT Adapter: " + ex.Message);
                 return false;
             }
         }
 
         IDictionary<string, ITag> IHistoryReader.GetCurrentTags()
         {
-            Log.Information("Connector adapter asked for current tags, returning: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
+            Log.Information("MQTT Adapter: Current tags requested, returning: " + Newtonsoft.Json.JsonConvert.SerializeObject(_tagDict));
             return MqttConnector.Browse();
         }
 
         void IDisposable.Dispose()
         {
-            Log.Information("Connector adapter told to IDisposable Dispose!");
+            Log.Information("MQTT Adapter: IDisposable Dispose called");
             MqttConnector.ReadCount = 0;
         }
     }
