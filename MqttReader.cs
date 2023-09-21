@@ -82,7 +82,7 @@ namespace SmipMqttConnector
                 } else
                 {
                     Log.Debug("This topic contains a single datapoint");
-                    var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(tag) + ".json"));
+                    var usePath = Path.Combine(MqttConnector.FindDataRoot(), MqttConnector.HistRoot, (MqttConnector.Base64Encode(tag) + ".txt"));
                     Log.Debug("Cached payload loading from: " + usePath);
                     try {
                         //TODO: Probably should use a StreamReader here for safety

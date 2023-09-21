@@ -27,8 +27,8 @@ namespace SmipMqttConnector
         internal static IDictionary<string, ITag> _lastTagDict = new Dictionary<string, ITag>();
 
         public static string HistRoot = "MqttHist";
-        public static string TopicListFile = "MqttTopicList.json";
-        public static string TopicSubscriptionFile = "CloudAcquiredTopicList.txt";
+        public static string TopicListFile = "MqttTopicList.txt";
+        public static string TopicSubscriptionFile = "CloudAcquiredTagList.txt";
 
         bool IDataSource.IsConnected { get => IsConnected; }
 
@@ -181,6 +181,15 @@ namespace SmipMqttConnector
         {
             //Unless you need customization beyond what is specified in the appsettings, you can leave this implementation empty
             Log.Information("Connector adapter setting tags: " + Newtonsoft.Json.JsonConvert.SerializeObject(tagNameList));
+            
+            //don't need to write this if successfully sharing thinkiqs
+            /*using (var sw = new StreamWriter(Path.Combine(FindDataRoot(), TopicSubscriptionFile), false))
+            {
+                foreach (var tagName in tagNameList)
+                {
+                    sw.WriteLine(tagName);
+                }
+            }*/
         }
 
         /// <summary>
