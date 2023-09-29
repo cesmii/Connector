@@ -1,12 +1,10 @@
 ﻿using Serilog;
-using Serilog.Formatting.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using ThinkIQ.DataManagement;
 using Newtonsoft.Json.Linq;
-using System.Data;
 using System.Text;
 
 namespace SmipMqttConnector
@@ -17,6 +15,7 @@ namespace SmipMqttConnector
         /// Stores the list of tags this Reader will service
         /// </summary>
         internal IDictionary<string, ITag> _tagDict { get; set; }
+        internal int SouthBridgeReads = 0;
 
         /// <summary>
         /// Constructor, creates a new Reader to service a specific list of tags
@@ -95,10 +94,20 @@ namespace SmipMqttConnector
                     }
                     catch (Exception ex)
                     {
-                        Log.Error("MQTT Adapter: An error occurred reading the topic payload history file " + usePath);
-                        Log.Error("MQTT Adapter: " + ex.Message);
+                        Log.Information("MQTT Adapter: An error occurred reading the topic payload history file " + usePath + ". It may not be cached yet.");
+                        Log.Debug("MQTT Adapter: " + ex.Message);
                     }                   
                 }
+            }
+            if (MqttConnector.SouthBridgeReaper && MqttConnector.SouthBridgeMaxLife > 0)
+            {
+                if (SouthBridgeReads >= MqttConnector.SouthBridgeMaxLife)
+                {
+                    Log.Information("South Bridge Reaper firing at MaxLife of " + MqttConnector.SouthBridgeMaxLife);
+                    MqttConnector.CycleSouthBridgeService();
+                    SouthBridgeReads = 0;
+                }
+                SouthBridgeReads++;
             }
             //return the list of new ItemData points
             return newData;

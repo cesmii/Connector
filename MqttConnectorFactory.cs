@@ -31,14 +31,11 @@ namespace SmipMqttConnector
         /// <returns>An instance of your Connector</returns>
         public IConnector Create()
         {
-            var myConnector = new MqttConnector();
-            myConnector.Parameters = _parameters;   //Set the Connector Parameters property to equal the parameters value we remembered during Initialize
+            //var myConnector = new MqttConnector();
+            //myConnector.Parameters = _parameters;   //Set the Connector Parameters property to equal the parameters value we remembered during Initialize
             Log.Information("MQTT Adapter: Created by South Bridge Service");
-            return myConnector;
-
-            /* More concise way to write the above
-            return new GPIOConnector { Parameters = _parameters };
-            */
+            return new MqttConnector { Parameters = _parameters };
+            //return myConnector;
         }
 
         /// <summary>

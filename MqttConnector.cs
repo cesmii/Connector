@@ -1,9 +1,7 @@
 ﻿using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -31,6 +29,10 @@ namespace SmipMqttConnector
         public static string HistRoot = "MqttHist";
         public static string TopicListFile = "MqttTopicList.txt";
         public static string TopicSubscriptionFile = "CloudAcquiredTagList.txt";
+        private static bool SouthBridgeCylcer = false;
+        private static int SouthBridgeCycleTime = 2500;
+        public static bool SouthBridgeReaper = false;
+        public static int SouthBridgeMaxLife = 0;
 
         bool IDataSource.IsConnected { get => IsConnected; }
 
@@ -64,12 +66,59 @@ namespace SmipMqttConnector
                 }
             }
 
-            Log.Information("MQTT Adapter: Connected!");
+            //Configure SouthBridge Cycler
+            if (Parameters.ContainsKey("SBCycleOnNewTag") && Parameters.ContainsKey("SBCycleTime"))
+            {
+                try
+                {
+                    if (Boolean.TryParse((string)Parameters["SBCycleOnNewTag"], out SouthBridgeCylcer))
+                    {
+                        int.TryParse((string)Parameters["SBCycleTime"], out SouthBridgeCycleTime);
+                    }
+                    if (SouthBridgeCylcer == true && SouthBridgeCycleTime > 0)
+                    {
+                        Log.Information("South Bridge Cycler configured with Cycle Time of " + SouthBridgeCycleTime);
+                    }
+                    else
+                    {
+                        Log.Debug("South Bridge Reaper disabled");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning("Could not parse configuration for SBCylcer");
+                    Log.Debug(ex.Message);
+                }
+            }
 
-            //TODO: Determine if the helper service is running, and send an accurate answer
+            //Configure SouthBridge Reaper
+            if (Parameters.ContainsKey("SBReaper") && Parameters.ContainsKey("MaxLife"))
+            {
+                try
+                {
+                    if (Boolean.TryParse((string)Parameters["SBReaper"], out SouthBridgeReaper))
+                    {
+                        int.TryParse((string)Parameters["MaxLife"], out SouthBridgeMaxLife);
+                    }
+                    if (SouthBridgeReaper == true && SouthBridgeMaxLife > 0)
+                    {
+                        Log.Information("South Bridge Reaper configured with a Max Life of " + SouthBridgeMaxLife);
+                    }
+                    else
+                    {
+                        Log.Debug("South Bridge Reaper disabled");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning("Could not parse configuration for SBReaper");
+                    Log.Debug(ex.Message);
+                }
+            }
+
+            Log.Information("MQTT Adapter: Connected!"); //TODO: Determine if the helper service is running, and show a more accurate message
             IsConnected = true;
             return true;
-
         }
 
         /// <summary>
@@ -110,34 +159,6 @@ namespace SmipMqttConnector
             }
         }
 
-        [Obsolete("This method should not be necessary, but the Cloud doesn't update otherwise. Need to use until fixed.")]
-        private static async void CycleSouthBridgeService()
-        {
-            Log.Warning("MQTT Adapter: SouthBridge Service will be cycled to force tag reload");
-            Thread.Sleep(5000);
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                System.Diagnostics.Process p = new System.Diagnostics.Process();
-                Log.Warning("MQTT Adapter: SouthBridge Service stopping.");
-                p.StartInfo.FileName = "net stop ThinkIQ.SouthBridge.Service";
-                p.StartInfo.UseShellExecute = true;
-                p.Start();
-                Thread.Sleep(5000);
-                Log.Warning("MQTT Adapter: SouthBridge Service starting.");
-                p.StartInfo.FileName = "net start ThinkIQ.SouthBridge.Service";
-                p.StartInfo.UseShellExecute = true;
-                p.Start();
-            }
-            else
-            {
-                System.Diagnostics.Process p = new System.Diagnostics.Process();
-                Log.Warning("MQTT Adapter: SouthBridge Service cycling now.");
-                p.StartInfo.FileName = Path.Combine(MqttConnector.FindDataRoot(), "southbridge-cycle.sh");
-                p.StartInfo.UseShellExecute = true;
-                p.Start();
-            }
-        }
-
         public static IDictionary<string, ITag> Browse()
         {
             Log.Information("MQTT Adapter: Doing internal Browse...");
@@ -158,8 +179,10 @@ namespace SmipMqttConnector
                     var myVar = new Variable();
                     myVar.Name = topic;
                     myVar.TagType = TagType.String;
-                    myVar.Attributes = new Dictionary<string, object>();
-                    myVar.Attributes.Add("DataType", "String");
+                    myVar.Attributes = new Dictionary<string, object>
+                    {
+                        { "DataType", "String" }
+                    };
                     /* UA Data Types are:
                     /* SByte | Byte | Int16 | UInt16 | Int32 | UInt32 | Int64 | UInt64 | Float | Double | Boolean | DateTime | String */
                     myTagDict.Add(myVar.Name, myVar);
@@ -211,6 +234,34 @@ namespace SmipMqttConnector
         {
             Log.Information("MQTT Adapter: Asked to disconnect");
             //Perform any necessary disconnect actions for your data source
+        }
+
+        [Obsolete("This method should not be necessary, but the Cloud doesn't update otherwise. Need to use until fixed.")]
+        public static async void CycleSouthBridgeService()
+        {
+            Log.Warning("MQTT Adapter: SouthBridge Service will be cycled to force tag reload");
+            Thread.Sleep(SouthBridgeCycleTime * 2);
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                System.Diagnostics.Process p = new System.Diagnostics.Process();
+                Log.Warning("MQTT Adapter: SouthBridge Service stopping.");
+                p.StartInfo.FileName = "net stop ThinkIQ.SouthBridge.Service";
+                p.StartInfo.UseShellExecute = true;
+                p.Start();
+                Thread.Sleep(SouthBridgeCycleTime);
+                Log.Warning("MQTT Adapter: SouthBridge Service starting.");
+                p.StartInfo.FileName = "net start ThinkIQ.SouthBridge.Service";
+                p.StartInfo.UseShellExecute = true;
+                p.Start();
+            }
+            else
+            {
+                System.Diagnostics.Process p = new System.Diagnostics.Process();
+                Log.Warning("MQTT Adapter: SouthBridge Service cycling now.");
+                p.StartInfo.FileName = Path.Combine(MqttConnector.FindDataRoot(), "southbridge-cycle.sh");
+                p.StartInfo.UseShellExecute = true;
+                p.Start();
+            }
         }
 
         public static string FindDataRoot()
