@@ -1,8 +1,4 @@
-﻿# Pre-requisites
-
-- MQTTService: will be posted elsewhere
-
-# Install on Windows
+﻿# Install on Windows
 
 - Create a new "Custom Connector" on the SMIP.
 - Install .NET Core Runtime 3.1 on the PC where the connector will be installed.
@@ -12,16 +8,29 @@
 - Add custom connector code to connect to data source 
 - Build DLL
 - From `services.msc` Stop the three (3) ThinkIQ services
-- Copy the DLL (and any dependencies) to C:\Program Files\ThinkIQ\SouthBridgeService install folder (default location)
+- Copy your DLL (and any dependencies) to C:\Program Files\ThinkIQ\SouthBridgeService install folder (default location)
 - Add reference to your DLL in C:\Program Files\ThinkIQ\SouthBridgeService\appsettings.json (More information [here](appsettings.md))
 ```
     "Connector": {
-      "Assembly": "SmipMqttConnector",
-      "Class": "SmipMqttConnector.MqttConnectorFactory",
+      "Assembly": "YourAssembly",
+      "Class": "YourNamespace.YourConnectorFactory",
       "Params": {
-        //Any parameters you need set before the Connector is constructed
+        //Any parameters you need set before your Connector is constructed
       }
     }
+```
+- Modify `model.json` to add any Attributes your Adapters needs at run time:
+```
+{
+  "Parent": [
+    "platform-instance-name-set-by-cloud""
+    "connector-name-set-in-cloud"
+  ],
+  "Name": "connector-name-set-in-cloud",
+  "Attributes": {
+    //Any run time parameters your Connector needs
+  }
+}
 ```
 - From `services.msc` Start the three (3) ThinkIQ services
 - Troubleshoot by looking at C:\Program Files\ThinkIQ\SouthBridgeService\Logs.
@@ -41,17 +50,32 @@
 - Stop the services:
     + `sudo systemctl stop tiq-south-bridge.service`
     + `sudo systemctl stop tiq-opcua-north.service`
-- Add this .DLL (and any dependencies) to /opt/thinkiq/services/SouthrBridgeService
+- Add your .DLL (and any dependencies) to /opt/thinkiq/services/SouthrBridgeService
 - Add reference to your DLL in `appsettings.json`:
 
 ```
     "Connector": {
-      "Assembly": "SmipMqttConnector",
-      "Class": "SmipMqttConnector.MqttConnectorFactory",
+      "Assembly": "YourAssembly",
+      "Class": "YourAssembly.YourConnectorFactory",
       "Params": {
-        //Any parameters you need set before the Connector is constructed
+        //Any parameters you need set before your Connector is constructed
       }
     }
+```
+
+- Modify `model.json` to add any Attributes your Adapters needs at run time:
+
+```
+{
+  "Parent": [
+    "platform-instance-name-set-by-cloud""
+    "connector-name-set-in-cloud"
+  ],
+  "Name": "connector-name-set-in-cloud",
+  "Attributes": {
+    //Any run time parameters your Connector needs
+  }
+}
 ```
 - Delete the DataRoot folder and all contents:
     + `sudo rm -rf /opt/thinkiq/DataRoot/`
@@ -60,11 +84,7 @@
     + `sudo systemctl start tiq-south-bridge.service` 
 - Logs for troubleshooting can be found at `/opt/thinkiq/logs/south`
 
-# Uninstall on Linux
+# Uninstall
 
 - `sudo apt remove tiq-gateway`
 - Ensure there are no remaining contents in `/opt/thinkiq/`
-
-# Additional Linux Instructions
-
-Read ThinkIQ's instructions [here](https://help.thinkiq.com/knowledge-base/data-connectivity/opc-ua-linux-installation)

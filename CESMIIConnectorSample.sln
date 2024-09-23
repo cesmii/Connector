@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.5.33627.172
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmipMqttConnector", "SmipMqttConnector.csproj", "{D5D46132-21C3-4A2B-83B8-DB6FC3E2B8CD}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E7673857-07C9-4533-9138-C274818251D1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CESMIIConnectorSample", "CESMIIConnectorSample.csproj", "{D5D46132-21C3-4A2B-83B8-DB6FC3E2B8CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

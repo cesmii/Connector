@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+      <OutputType>Library</OutputType>
+      <TargetFramework>netstandard2.0</TargetFramework>
+    </PropertyGroup>
+
+     <ItemGroup>
+      <Reference Include="ThinkIQ.DataManagement">
+        <HintPath>C:\Program Files\ThinkIQ\SouthBridgeService\ThinkIQ.DataManagement.dll</HintPath>
+      </Reference>
+      <Reference Include="ThinkIQ.Utils">
+        <HintPath>C:\Program Files\ThinkIQ\SouthBridgeService\ThinkIQ.Utils.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Update="NETStandard.Library" Version="2.0.0" />
+    </ItemGroup>
+</Project>

@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "CESMIIConnectorSample": {
-      "commandName": "Project",
-      "workingDirectory": "C:\\Program Files\\ThinkIQ\\SouthBridgeService"
-    }
-  }
-}

@@ -1,13 +1,30 @@
-# SM Edge Gateway Connector Adapter for MQTT
+# SM Edge Gateway Connectors
+The SM Edge Gateway is a small, on-prem component of the SM Platform that facilitates secure, high-speed ingress of data into the SM Platform.
 
-This Connector Adapter works in conjunction with a MQTT service (to be posted elsewhere) to provide MQTT data to the SMIP. 
+This diagram shows the high-level components of the SMIP. The Gateway (also known as the SM Edge, SM Edge Gateway, or simply the Connector) connects to multiple plant floor (or more generically OT, or Operational Technology) data sources, to secure transmit data to the core Platform.
 
-MQTT Topics are treated like Tags. Simple MQTT payloads are treated as individual data points. 
-Complex MQTT payloads in JSON are treated as multiple datapoints that can be individually stored.
-Since MQTT has no type-safety, all data points are created as Strings, and any payload that can't be parsed is ignored.
+![Platform Blocks](images/HighLevelSMIP.png)
 
-Visit the [parent repo to learn more about the SMIP Gateway Connector](https://github.com/cesmii/Connector)
+The Gateway uses an extensible approach to protocol adaptation through the use of Connector Adapters. Connectors can be used to adapt a variety of datasources to to the Gateway, which provides store-and-forward and secure data tranmission. In today's implementation, the secure outbound (to the core) connection is a function of the "North Bridge" and works via a OPC UA Service that supports reverse tunnelling. Future northbound services may be added in later versions. The inbound (to the gateway) connection is a function of the "South Bridge" which works by instantiating a Connector Adapter. With this pattern a wide array of protocols and interfaces can be adapted to the Gateway. Currently the SMIP supports historical data sources, such as OPC HDA, OSI Pi and Wonderware Historian, and OPC live data Sources, including OPC DA and OPC UA LiveData.
 
-## Known Limitations
+![Gateway Architecture](images/GatewayArchitecture.png)
 
-This initial version does not support historical reads -- only the most recent MQTT message is available.
+If none of the supported protocols work for a given project, the Connector Adapter can be "swapped out" with a new adapter that meets those requirements. Before building your own custom Connector Adapter, check to see if [one of the existing Connectors could work for you](existing-connectors.md). The Sample contained here illustrates how to build your own Connector Adapter, using the cross-platform .NET Core runtime and C#. 
+
+## Lifecycle
+As you look through the code, it may be helpful to understand the basic stages of the Connector's life cycle
+- Instantiation: the Gateway's South Bridge service calls your ConnectoryFactory to create an Instance of your Connector
+- Connect: the South Bridge service calls your Connector's Connect method to instruct it to make a connection to your data source
+- Browse: the South Bridge service calls your Connector's Browse method to get a list of tags (data points) your Connector can provide
+- CreateReader: the South Bridge service creates one or more instances of your Reader to service sets of tags configured for ingress
+- Read: The South Bridge services calls your Reader's Read method to gather samples for the set of tags that Reader instance was created to service
+- Dispose: Your Reader instance is no longer needed and can clean-up
+- Disconnect: Your Connector is no longer needed and can Disconnect from the data source
+
+## Dependencies
+The sample code depends on two DLLs that are not distributed with this repo (for license reasons).
+
+SM Platform users can create a Custom Connector in their platform instance, and download the Installer, which will deploy the dependencies to the location expected in the .csproj file
+
+## Additional information
+Review the code comments and supplementary .md files for further information on creating, [installing](installation.md) and [configuring](appsettings.md) Connectors.

@@ -1,14 +1,13 @@
-﻿using Serilog;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using ThinkIQ.DataManagement;
 
-namespace SmipMqttConnector
+namespace CESMII
 {
     /// <summary>
     /// The Factory patterns allows the SM Edge Gateway to instantiate Connectors without knowing the details
     /// of how a given Connector needs to be constructed.
     /// </summary>
-    public class MqttConnectorFactory : IConnectorFactory
+    public class SampleConnectorFactory : IConnectorFactory
     {
         private IDictionary<string, object> _parameters;
 
@@ -20,8 +19,6 @@ namespace SmipMqttConnector
         public void Initialize(IDictionary<string, object> parameters)
         {
             _parameters = parameters;   //remember the parameters that were passed in.
-
-            Log.Information("MQTT Adapter: Initialized with parameters " + Newtonsoft.Json.JsonConvert.SerializeObject(parameters));
         }
 
         /// <summary>
@@ -31,22 +28,23 @@ namespace SmipMqttConnector
         /// <returns>An instance of your Connector</returns>
         public IConnector Create()
         {
-            //var myConnector = new MqttConnector();
-            //myConnector.Parameters = _parameters;   //Set the Connector Parameters property to equal the parameters value we remembered during Initialize
-            Log.Information("MQTT Adapter: Created by South Bridge Service");
-            return new MqttConnector { Parameters = _parameters };
-            //return myConnector;
+            var myConnector = new SampleConnector();
+            myConnector.Parameters = _parameters;   //Set the Connector Parameters property to equal the parameters value we remembered during Initialize
+            return myConnector;
+
+            /* More concise way to write the above
+            return new GPIOConnector { Parameters = _parameters };
+            */
         }
 
         /// <summary>
         /// Used to instantiate our Configuration class. See GPIOConnectorConfig.cs
         /// </summary>
-        /// <seealso cref="MqttConnector"/>
+        /// <seealso cref="SampleConnector"/>
         /// <returns>A new ConnectorConfig instance</returns>
         public IConnectorConfig GetConfig()
         {
-            Log.Information("MQTT Adapter: Configuration requested");
-            return new MqttConnectorConfig();
+            return new SampleConnectorConfig();
         }
 
     }

@@ -1,15 +1,15 @@
 ﻿using System.IO;
 using ThinkIQ.DataManagement;
 
-namespace SmipMqttConnector
+namespace CESMII
 {
-    public class MqttConnectorConfig : IConnectorConfig
+    public class SampleConnectorConfig : IConnectorConfig
     {
         /// <summary>
         /// Called by the South Bridge Service to get configuration info for your connector
         /// </summary>
         /// <returns>Returns connector configuration information</returns>
-        /// <seealso cref="MqttConnector.Connect(IConnectorInfo)"/>
+        /// <seealso cref="SampleConnector.Connect(IConnectorInfo)"/>
         public IConnectorInfo GetConnectorInfo()
         {
             //Typically, this will come from a model.json file created by the Gateway installer
